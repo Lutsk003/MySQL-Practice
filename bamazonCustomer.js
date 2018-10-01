@@ -44,9 +44,11 @@ var buyFromDatabase = function() {
             validate: function(value) {
                 if (isNaN(value) == false) {
                     return true;
+                } if (value > 10) {
+                    return false;
                 } else {
                     return false;
-                }
+                } 
             }
         }, {
             name: "Quantity",
@@ -64,21 +66,30 @@ var buyFromDatabase = function() {
             var idChoice = answer.itemId - 1;
             var productChoice = res[idChoice];
             var productQuantity = answer.Quantity;
-            var newQuantity = productChoice.stock_quantity;
+            var newQuantity = res[idChoice].stock_quantity - productQuantity;
             if (productQuantity < res[idChoice].stock_quantity) {
                 console.log(`The total price for ${answer.Quantity} - ${productChoice.product_name} is: $${(productChoice.price * productQuantity).toFixed(2)}`)
-                connection.query("UPDATE warehouse SET ? WHERE ?", [{
-                    newQuantity: productChoice.stock_quantity - productQuantity
-                }, {
-                    id: productChoice.item_id
-                }], function(err, res) {
+
+                // connection.query("UPDATE warehouse SET ? WHERE ?", [{
+                //     newQuantity: productChoice.stock_quantity - productQuantity
+                // }, {
+                //     id: productChoice.item_id
+                // }], function(err, res) {
+                //     buyFromDatabase();
+                // });
+
+                connection.query("UPDATE warehouse SET stock_quantity = " + newQuantity +" WHERE item_id = " + productChoice.itemId, function (err, res) {
+                    console.log('');
+                    console.log('The order had been processed.');
+                    console.log('');
                     buyFromDatabase();
-                    console.log("pQ: " + productQuantity + "pChoice " + productChoice.stock_quantity + "NewQ " + newQuantity);
-                });
+                    connection.end();
+                })
+
+                // Warehouse quantity not updating correctly
 
             } else {
                 console.log(`Unfortunately, there is insufficient quantity of this item at this time. The inventory currently holds ${res[idChoice].stock_quantity} in the inventory`);
-                buyFromDatabase();
             }
         })
     })
